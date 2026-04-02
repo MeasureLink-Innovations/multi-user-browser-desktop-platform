@@ -1,0 +1,31 @@
+services:
+  web-platform:
+    build:
+      context: ./web-platform
+      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./web-platform:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - DATABASE_URL=file:./dev.db
+      - NEXTAUTH_SECRET=secret
+      - NEXTAUTH_URL=http://localhost
+    networks:
+      - platform-network
+
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-platform
+    networks:
+      - platform-network
+
+networks:
+  platform-network:
+    driver: bridge

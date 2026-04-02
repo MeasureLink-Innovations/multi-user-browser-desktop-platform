@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  role         String           @default("standard_user") // admin, standard_user, viewer
+  status       String           @default("active")        // active, deactivated
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  lastLoginAt  DateTime?
+  sessions     DesktopSession[]
+}
+
+model DesktopSession {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  workerId       String?         @unique
+  worker         WorkerInstance? @relation(fields: [workerId], references: [id])
+  status         String          @default("starting") // starting, ready, stopped, expired, failed
+  accessToken    String?         @unique
+  routeKey       String?         @unique
+  startedAt      DateTime        @default(now())
+  lastActivityAt DateTime        @updatedAt
+  expiresAt      DateTime?
+  displayMode    String          @default("single") // single, dual
+}
+
+model WorkerInstance {
+  id              String          @id @default(cuid())
+  imageTag        String
+  containerName   String          @unique
+  internalHost    String?
+  display1Target  String?
+  display2Target  String?
+  healthStatus    String          @default("starting") // starting, ready, unhealthy, terminated
+  createdAt       DateTime        @default(now())
+  terminatedAt    DateTime?
+  desktopSession  DesktopSession?
+}
