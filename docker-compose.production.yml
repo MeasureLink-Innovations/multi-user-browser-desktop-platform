@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     working_dir: /app
     command: npm run start
+    volumes:
+      - ./web-platform/dev.db:/app/dev.db
     environment:
       DATABASE_URL: file:./dev.db
       NEXTAUTH_SECRET: secret
