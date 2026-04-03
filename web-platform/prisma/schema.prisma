@@ -47,4 +47,6 @@ model WorkerInstance {
   createdAt       DateTime        @default(now())
   terminatedAt    DateTime?
   desktopSession  DesktopSession?
+  isPoolMember    Boolean         @default(false)
+  currentOwnerId  String?
 }

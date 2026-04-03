@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Claim Desktop Session
 The system SHALL allow a logged-in user to claim an available desktop session from the pre-provisioned pool.

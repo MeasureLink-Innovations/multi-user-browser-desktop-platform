@@ -16,6 +16,7 @@ export async function GET(req: Request) {
 
   const desktopSession = await prisma.desktopSession.findUnique({
     where: { id: sessionId },
+    include: { worker: true },
   });
 
   if (!desktopSession) {
@@ -23,7 +24,11 @@ export async function GET(req: Request) {
   }
 
   // Authorization check: owner or admin
-  if (desktopSession.userId !== session.user.id && (session.user as any).role !== 'admin') {
+  const isOwner = desktopSession.userId === session.user.id;
+  const isWorkerOwner = desktopSession.worker?.currentOwnerId === session.user.id;
+  const isAdmin = (session.user as any).role === 'admin';
+
+  if (!isAdmin && (!isOwner || !isWorkerOwner)) {
     return new Response('Forbidden', { status: 403 });
   }
 
