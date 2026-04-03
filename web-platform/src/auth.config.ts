@@ -9,6 +9,7 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
       const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+      const isOnLogin = nextUrl.pathname === '/login';
       
       if (isOnAdmin) {
         if (isLoggedIn && (auth.user as any)?.role === 'admin') return true;
@@ -18,9 +19,12 @@ export const authConfig = {
       if (isOnDashboard) {
         if (isLoggedIn) return true;
         return false; // Redirect unauthenticated users to login page
-      } else if (isLoggedIn && nextUrl.pathname === '/login') {
+      }
+
+      if (isOnLogin && isLoggedIn) {
         return Response.redirect(new URL('/dashboard', nextUrl));
       }
+
       return true;
     },
     jwt({ token, user }) {

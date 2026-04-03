@@ -12,6 +12,7 @@ services:
       - DATABASE_URL=file:./dev.db
       - NEXTAUTH_SECRET=secret
       - NEXTAUTH_URL=http://localhost
+      - AUTH_TRUST_HOST=true
     networks:
       - platform-network
 

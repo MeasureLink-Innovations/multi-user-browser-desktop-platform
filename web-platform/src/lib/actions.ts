@@ -8,6 +8,7 @@ export async function authenticate(
   formData: FormData,
 ) {
   try {
+    console.log('Authenticate action called with email:', formData.get('email'));
     await signIn('credentials', formData);
   } catch (error) {
     if (error instanceof AuthError) {

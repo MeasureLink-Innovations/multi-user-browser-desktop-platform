@@ -22,14 +22,22 @@ export const { auth, signIn, signOut, handlers: { GET, POST } } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
+        // Handle cases where credentials might be FormData or plain object
+        const creds = credentials instanceof FormData 
+          ? Object.fromEntries(credentials) 
+          : credentials;
+
         const parsedCredentials = z
           .object({ email: z.string().email(), password: z.string().min(6) })
-          .safeParse(credentials);
+          .safeParse(creds);
 
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
           const user = await getUser(email);
-          if (!user) return null;
+          if (!user) {
+            console.log('User not found in DB');
+            return null;
+          }
           
           const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
           console.log('Password matches:', passwordsMatch);
@@ -37,7 +45,7 @@ export const { auth, signIn, signOut, handlers: { GET, POST } } = NextAuth({
           if (passwordsMatch) return user;
         }
 
-        console.log('Invalid credentials for:', credentials?.email);
+        console.log('Invalid credentials for:', (creds as any)?.email);
         return null;
       },
     }),

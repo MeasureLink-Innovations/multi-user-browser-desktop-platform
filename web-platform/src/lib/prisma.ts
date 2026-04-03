@@ -8,10 +8,9 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const dbUrl = process.env.DATABASE_URL || 'file:dev.db';
 console.log('Prisma initializing with adapter for:', dbUrl);
 
-// better-sqlite3 needs the raw path, without the 'file:' prefix
-const dbPath = dbUrl.replace(/^file:/, '');
-const db = new Database(dbPath);
-const adapter = new PrismaBetterSqlite3(db, {
+// Pass the config object directly to the adapter. 
+// The adapter will handle creating the better-sqlite3 instance internally.
+const adapter = new PrismaBetterSqlite3({
   url: dbUrl
 });
 
