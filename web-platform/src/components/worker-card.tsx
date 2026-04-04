@@ -109,7 +109,7 @@ export function WorkerCard({ worker, userId }: WorkerCardProps) {
         {currentIsOwnedByMe ? (
           <div className="flex flex-col gap-2">
             <a 
-              href={`/desktop/${sessionId}`}
+              href={`/desktop/${sessionId}/?path=desktop/${sessionId}/websockify`}
               className="w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
             >
               Open Desktop
