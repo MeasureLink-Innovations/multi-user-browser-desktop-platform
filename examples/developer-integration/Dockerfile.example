@@ -1,0 +1,44 @@
+# Reference Dockerfile for Developer Image Integration
+# This example shows how to add the platform's desktop runtime to an existing image.
+
+# 1. Use your existing developer/simulator image
+FROM ubuntu:22.04 
+
+# (Simulating a developer image by installing a 'simulator' like xeyes or xterm)
+RUN apt-get update && apt-get install -y x11-apps xterm
+
+# 2. Install Desktop & VNC dependencies
+# These are required for the platform to provide browser access.
+RUN apt-get update && apt-get install -y \
+    xfce4 xfce4-goodies \
+    tigervnc-standalone-server \
+    novnc websockify \
+    curl python3 net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3. Standard Platform Setup
+# The platform expects a 'worker' user and specific directory structure.
+RUN useradd -ms /bin/bash worker
+WORKDIR /home/worker
+
+# 4. Copy Runtime Scripts
+# You should copy these from the 'desktop-runtime' directory of the platform repo.
+# In a real setup, you might use a multi-stage build or relative paths.
+COPY ./desktop-runtime/entrypoint.sh /home/worker/entrypoint.sh
+COPY ./desktop-runtime/xstartup /home/worker/xstartup
+RUN chmod +x /home/worker/entrypoint.sh /home/worker/xstartup
+
+# 5. Application Integration
+# Copy your custom entrypoint/startup logic
+COPY ./examples/developer-integration/entrypoint-example.sh /home/worker/entrypoint-example.sh
+RUN chmod +x /home/worker/entrypoint-example.sh
+
+# 6. Final Permissions
+RUN chown -R worker:worker /home/worker
+
+# 7. Exposure
+# Port 6080 is the default noVNC port.
+EXPOSE 6080 6081
+
+# Use the platform's entrypoint which then calls your custom logic
+ENTRYPOINT ["/home/worker/entrypoint-example.sh"]
