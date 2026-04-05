@@ -117,7 +117,31 @@ Suggested contents:
 3. Backend creates or assigns a worker.
 4. Backend records session metadata in the database.
 5. Backend returns a protected route or signed token for desktop access.
-6. Reverse proxy forwards authenticated WebSocket and HTTP traffic to the correct worker target.[cite:36][cite:38][cite:41]
+6. Reverse proxy forwards authenticated WebSocket and HTTP traffic to the correct worker target.
+
+### Worker Configuration & Scaling
+The system uses environment variables in the central orchestration layer (`docker-compose.yml`) to define the "shape" of the worker pool. All workers in a pool share a uniform configuration (e.g., monitor count) for architectural simplicity.
+
+```
+┌──────────────────┐
+│ docker-compose.yml│
+│ MONITOR_COUNT=2  │──┐ (Environment Injected)
+└──────────────────┘  │
+                      ▼
+           ┌──────────────────┐
+           │   Web Platform   │
+           │ ensureWorkerPool │
+           └────────┬─────────┘
+                    │
+           (Creates N Containers)
+                    │
+      ┌─────────────┼─────────────┐
+      ▼             ▼             ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Worker 1 │  │ Worker 2 │  │ Worker 3 │
+│ MC=2     │  │ MC=2     │  │ MC=2     │
+└──────────┘  └──────────┘  └──────────┘
+```
 
 ## Data model
 Minimum entities:
@@ -141,7 +165,6 @@ Minimum entities:
 - `started_at`
 - `last_activity_at`
 - `expires_at`
-- `display_mode` (`single`, `dual`)
 
 ### WorkerInstance
 - `id`
@@ -150,9 +173,13 @@ Minimum entities:
 - `internal_host`
 - `display_1_target`
 - `display_2_target` (nullable)
+- `display_mode` (`single`, `dual`)
+- `volume_name`
 - `health_status`
 - `created_at`
 - `terminated_at`
+- `is_pool_member`
+- `current_owner_id`
 
 ## API requirements
 Minimum API surface:

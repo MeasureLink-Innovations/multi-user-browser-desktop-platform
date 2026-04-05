@@ -12,6 +12,8 @@ interface Worker {
   containerName: string;
   dockerStatus: string;
   currentOwnerId: string | null;
+  displayMode: string;
+  volumeName?: string | null;
   desktopSession?: {
     id: string;
   } | null;
@@ -88,14 +90,19 @@ export function WorkerCard({ worker, userId }: WorkerCardProps) {
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="font-bold text-lg text-gray-900">{worker.containerName}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={`w-2 h-2 rounded-full ${
-              currentStatus === 'running' ? 'bg-green-500' : 
-              currentStatus === 'restarting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
-            }`}></span>
-            <span className="text-xs font-semibold uppercase text-gray-500">
-              {currentStatus}
-            </span>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${
+                currentStatus === 'running' ? 'bg-green-500' : 
+                currentStatus === 'restarting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
+              }`}></span>
+              <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">
+                {currentStatus}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-600 uppercase">
+              {worker.displayMode === 'dual' ? 'Dual Monitor' : 'Single Monitor'}
+            </div>
           </div>
         </div>
         {currentIsOwnedByMe && (
@@ -108,12 +115,37 @@ export function WorkerCard({ worker, userId }: WorkerCardProps) {
       <div className="space-y-4">
         {currentIsOwnedByMe ? (
           <div className="flex flex-col gap-2">
-            <a 
-              href={`/desktop/${sessionId}/?path=desktop/${sessionId}/websockify`}
-              className="w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
-            >
-              Open Desktop
-            </a>
+            {worker.displayMode === 'dual' ? (
+              <div className="flex flex-col gap-2">
+                <a 
+                  href={`/desktop/${sessionId}/?monitor=all`}
+                  className="w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Open Combined View
+                </a>
+                <div className="grid grid-cols-2 gap-2">
+                  <a 
+                    href={`/desktop/${sessionId}/?monitor=1`}
+                    className="text-center bg-blue-50 text-blue-700 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors"
+                  >
+                    Monitor 1
+                  </a>
+                  <a 
+                    href={`/desktop/${sessionId}/?monitor=2`}
+                    className="text-center bg-blue-50 text-blue-700 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors"
+                  >
+                    Monitor 2
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <a 
+                href={`/desktop/${sessionId}/`}
+                className="w-full text-center bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+              >
+                Open Desktop
+              </a>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={handleRestart}

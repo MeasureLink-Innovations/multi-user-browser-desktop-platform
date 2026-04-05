@@ -1,11 +1,18 @@
 ## ADDED Requirements
 
 ### Requirement: Configurable Startup Pool
-The system SHALL provision a number of worker containers at startup as defined by the `WORKER_POOL_SIZE` environment variable.
+The system SHALL provision a number of worker containers at startup as defined by the `WORKER_POOL_SIZE` environment variable. 
 
 #### Scenario: Startup Provisioning
 - **WHEN** the platform starts
 - **THEN** it SHALL ensure the configured number of containers are running and registered in the database
+
+### Requirement: Uniform Worker Configuration
+The system SHALL configure all workers in the pool with a uniform monitor count as defined by the `MONITOR_COUNT` environment variable.
+
+#### Scenario: Uniform Monitor Configuration
+- **WHEN** the pool is initialized or updated
+- **THEN** every worker container SHALL be created with the same `MONITOR_COUNT` environment variable and its corresponding `displayMode` SHALL be persisted in the database
 
 ### Requirement: Manual Container Restart
 The system SHALL allow a user who has claimed a container to manually trigger its restart.

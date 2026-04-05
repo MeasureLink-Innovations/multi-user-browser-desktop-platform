@@ -33,7 +33,6 @@ model DesktopSession {
   startedAt      DateTime        @default(now())
   lastActivityAt DateTime        @updatedAt
   expiresAt      DateTime?
-  displayMode    String          @default("single") // single, dual
 }
 
 model WorkerInstance {
@@ -43,6 +42,8 @@ model WorkerInstance {
   internalHost    String?
   display1Target  String?
   display2Target  String?
+  displayMode     String          @default("single") // single, dual
+  volumeName      String?
   healthStatus    String          @default("starting") // starting, ready, unhealthy, terminated
   createdAt       DateTime        @default(now())
   terminatedAt    DateTime?

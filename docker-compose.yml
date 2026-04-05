@@ -20,6 +20,7 @@ services:
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
       WORKER_POOL_SIZE: "3"
+      MONITOR_COUNT: "1"
     ports:
       - "3000:3000"
     expose:

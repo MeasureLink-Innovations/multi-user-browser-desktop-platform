@@ -3,14 +3,17 @@ import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 
 export default async function DesktopPage({ 
-  params 
+  params,
+  searchParams
 }: { 
-  params: Promise<{ sessionId: string }> 
+  params: Promise<{ sessionId: string }>,
+  searchParams: Promise<{ monitor?: string }>
 }) {
   const session = await auth();
   if (!session) redirect('/login');
 
   const { sessionId } = await params;
+  const { monitor } = await searchParams;
 
   const desktopSession = await prisma.desktopSession.findUnique({
     where: { id: sessionId },
@@ -24,11 +27,15 @@ export default async function DesktopPage({
     redirect('/dashboard');
   }
 
-  // The iframe will point to the proxy route /desktop/[sessionId]/
-  // Nginx will proxy this to the worker on port 6080.
-  // The worker (noVNC) expects vnc.html for the client UI.
-  // autoconnect=true automatically starts the connection.
-  const desktopUrl = `/desktop/${sessionId}/vnc.html?autoconnect=true&reconnect=true&resize=remote`;
+  const isDual = desktopSession.worker?.displayMode === 'dual';
+
+  // URLs for the noVNC instances
+  const desktop1Url = `/desktop/${sessionId}/vnc.html?autoconnect=true&reconnect=true&resize=remote`;
+  const desktop2Url = `/desktop2/${sessionId}/vnc.html?autoconnect=true&reconnect=true&resize=remote`;
+
+  // Determine what to show based on 'monitor' parameter
+  const showMonitor1 = !monitor || monitor === '1' || monitor === 'all';
+  const showMonitor2 = (isDual && monitor === '2') || (isDual && (!monitor || monitor === 'all'));
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#2c2c2c]">
@@ -39,7 +46,12 @@ export default async function DesktopPage({
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight">VIRTUAL DESKTOP</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Session {sessionId.slice(0, 8)}</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">
+              Session {sessionId.slice(0, 8)} 
+              {isDual && <span className="ml-2 text-blue-400 font-bold">
+                [{monitor === '1' ? 'MONITOR 1' : monitor === '2' ? 'MONITOR 2' : 'DUAL MONITOR'}]
+              </span>}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -52,13 +64,27 @@ export default async function DesktopPage({
           </a>
         </div>
       </header>
-      <div className="flex-1 relative bg-black">
-        <iframe 
-          src={desktopUrl} 
-          className="absolute inset-0 w-full h-full border-none"
-          title="Desktop Session"
-          allow="fullscreen; clipboard-read; clipboard-write"
-        />
+      <div className={`flex-1 relative bg-black flex ${isDual && (!monitor || monitor === 'all') ? 'flex-row' : 'flex-col'}`}>
+        {showMonitor1 && (
+          <div className={`relative ${isDual && (!monitor || monitor === 'all') ? 'w-1/2' : 'w-full h-full'}`}>
+            <iframe 
+              src={desktop1Url} 
+              className="absolute inset-0 w-full h-full border-none"
+              title="Desktop Session - Monitor 1"
+              allow="fullscreen; clipboard-read; clipboard-write"
+            />
+          </div>
+        )}
+        {showMonitor2 && (
+          <div className={`relative ${isDual && (!monitor || monitor === 'all') ? 'w-1/2 border-l border-gray-800' : 'w-full h-full'}`}>
+            <iframe 
+              src={desktop2Url} 
+              className="absolute inset-0 w-full h-full border-none"
+              title="Desktop Session - Monitor 2"
+              allow="fullscreen; clipboard-read; clipboard-write"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

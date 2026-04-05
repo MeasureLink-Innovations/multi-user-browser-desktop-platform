@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   let sessionId: string | null = null;
 
   if (originalUri) {
-    const match = originalUri.match(/^\/desktop\/([a-zA-Z0-9_-]+)/);
+    const match = originalUri.match(/^\/desktop2?\/([a-zA-Z0-9_-]+)/);
     if (match) {
       sessionId = match[1];
     }

@@ -29,12 +29,11 @@ COPY entrypoint.sh /home/worker/entrypoint.sh
 COPY xstartup /home/worker/xstartup
 RUN chmod +x /home/worker/entrypoint.sh /home/worker/xstartup
 
-# Link noVNC files to the writeable directory
+# link noVNC files to the writeable directory
 RUN cp -r /usr/share/novnc/* /home/worker/novnc/
 
 # Switch to the non-root user
 RUN chown -R worker:worker /home/worker
-USER worker
 
 # Entrypoint for the container
 ENTRYPOINT ["/home/worker/entrypoint.sh"]
