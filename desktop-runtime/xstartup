@@ -1,4 +1,24 @@
 #!/bin/sh
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-exec startxfce4
+
+# Source worker environment (tokens, credentials) written by entrypoint at startup.
+if [ -f /etc/profile.d/worker-env.sh ]; then
+    . /etc/profile.d/worker-env.sh
+fi
+
+# vncconfig enables clipboard synchronisation between X11 apps and the VNC/noVNC client.
+vncconfig -nowin &
+
+# Use MATE desktop: marco is a compositing WM that natively handles depth-32 ARGB
+# windows (Qt5 apps), unlike fluxbox which cannot reparent them without a compositor.
+if command -v mate-session >/dev/null 2>&1; then
+    exec dbus-launch --exit-with-session mate-session
+fi
+
+# Fallback to fluxbox if MATE is not available.
+if command -v dbus-launch >/dev/null 2>&1; then
+    exec dbus-launch --exit-with-session fluxbox
+fi
+
+exec fluxbox

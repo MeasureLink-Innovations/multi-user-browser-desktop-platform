@@ -1,43 +1,70 @@
 FROM ubuntu:22.04
 
-# Avoid prompts during installation
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install desktop environment and VNC/noVNC components
-RUN apt-get update && apt-get install -y \
-    xfce4 xfce4-goodies \
-    tigervnc-standalone-server \
-    novnc websockify \
-    curl \
-    python3 \
+ENV TZ=Europe/Berlin \
+    HTTP_PROXY=${HTTP_PROXY:-${http_proxy}} \
+    HTTPS_PROXY=${HTTPS_PROXY:-${https_proxy}} \
+    NO_PROXY=${NO_PROXY:-${no_proxy}} \
+    http_proxy=${http_proxy:-${HTTP_PROXY}} \
+    https_proxy=${https_proxy:-${HTTPS_PROXY}} \
+    no_proxy=${no_proxy:-${NO_PROXY}} \
+    XAUTHORITY=/home/vscode/.xauth/.Xauthority \
+    VNC_RESOLUTION=2540x1260x24 \
+    WORKER_USER=vscode \
+    WORKER_HOME=/home/vscode
+
+USER root
+
+# Run the desktop-lite install script — installs VNC, noVNC, fluxbox, all desktop deps,
+# creates /usr/local/share/desktop-init.sh and /usr/local/bin/set-resolution.
+COPY install.sh /tmp/install.sh
+RUN set -eux; \
+    if [ -n "${HTTP_PROXY:-}" ]; then \
+    printf 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' \
+    "$HTTP_PROXY" "${HTTPS_PROXY:-$HTTP_PROXY}" > /etc/apt/apt.conf.d/01proxy; \
+    fi; \
+    USERNAME=vscode PASSWORD=noPassword INSTALL_NOVNC=true bash /tmp/install.sh; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
     net-tools \
-    && rm -rf /var/lib/apt/lists/*
+    mate-session-manager \
+    marco \
+    mate-panel \
+    mate-settings-daemon \
+    mate-terminal \
+    mate-themes \
+    mate-icon-theme; \
+    rm -f /tmp/install.sh; \
+    rm -rf /var/lib/apt/lists/*
 
-# Set up a non-root user
-RUN useradd -ms /bin/bash worker
-WORKDIR /home/worker
+# libxcb-xtest symlink required by PlatynUI at runtime.
+# /workspaces → /home/vscode/data (the persistent volume).
+RUN set -eux; \
+    mkdir -p /home/vscode/.vnc /home/vscode/.xauth /home/vscode/data; \
+    ln -sf /usr/lib/x86_64-linux-gnu/libxcb-xtest.so.0 /usr/lib/x86_64-linux-gnu/libxcb-xtest.so; \
+    rm -rf /workspaces && ln -s /home/vscode/data /workspaces; \
+    if command -v git >/dev/null 2>&1; then git config --system core.fileMode false; fi
 
-# Create necessary directories
-RUN mkdir -p /home/worker/.vnc
-RUN mkdir -p /home/worker/novnc
+WORKDIR /home/vscode
 
-# Expose the noVNC port
+COPY entrypoint.sh /home/vscode/entrypoint.sh
+COPY xstartup /home/vscode/xstartup
+COPY scripts/ /home/vscode/
+
+RUN set -eux; \
+    chmod +x /home/vscode/entrypoint.sh /home/vscode/xstartup \
+    chown -R vscode:vscode /home/vscode
+
 EXPOSE 6080
 
-# Copy startup scripts
-COPY entrypoint.sh /home/worker/entrypoint.sh
-COPY xstartup /home/worker/xstartup
-RUN chmod +x /home/worker/entrypoint.sh /home/worker/xstartup
+ENTRYPOINT ["/home/vscode/entrypoint.sh"]
 
-# link noVNC files to the writeable directory
-RUN cp -r /usr/share/novnc/* /home/worker/novnc/
-
-# Switch to the non-root user
-RUN chown -R worker:worker /home/worker
-
-# Entrypoint for the container
-ENTRYPOINT ["/home/worker/entrypoint.sh"]
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:6080/ || exit 1
+CMD []

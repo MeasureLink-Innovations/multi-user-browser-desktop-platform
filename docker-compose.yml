@@ -13,7 +13,6 @@ services:
     environment:
       DATABASE_URL: file:./dev.db
       NEXTAUTH_SECRET: secret
-      NEXTAUTH_URL: http://localhost
       NEXTAUTH_URL_INTERNAL: http://web-platform:3000
       AUTH_TRUST_HOST: "true"
       NODE_ENV: development
